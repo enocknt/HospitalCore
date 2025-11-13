@@ -4,6 +4,8 @@
 classDiagram
     direction LR
 
+    %% --- Definição das Classes ---
+
     class Pessoa {
         <<Abstract>>
         # string nome
@@ -71,23 +73,29 @@ classDiagram
     class LeitoExcecao { }
     class EntidadeNaoEncontradaExcecao { }
 
-    ' Herança de Pessoas (Polimorfismo 1)
+    %% --- Herança de Pessoas (Polimorfismo 1) ---
     Pessoa <|-- Paciente
     Pessoa <|-- Medico
 
-    ' Herança de Exceções (Polimorfismo 2)
+    %% --- Herança de Exceções (Polimorfismo 2) ---
     std.exception <|-- HospitalExcecao
     HospitalExcecao <|-- AgendamentoExcecao
     HospitalExcecao <|-- LeitoExcecao
     HospitalExcecao <|-- EntidadeNaoEncontradaExcecao
 
-    ' Relações de Agregação e Associação
+    %% --- Relações de Agregação e Associação ---
+    
+    %% O SistemaGestao "gerencia" as entidades principais
     SistemaGestao o-- "1..*" Pessoa : "gerencia"
     SistemaGestao o-- "1..*" AlaHospitalar : "gerencia"
     SistemaGestao o-- "0..*" Consulta : "gerencia"
 
+    %% Uma Consulta "refere-se a" um Paciente e um Medico
     Consulta "1" ..> "1" Paciente : "paciente"
     Consulta "1" ..> "1" Medico : "medico"
 
+    %% Uma AlaHospitalar "contém" Leitos
     AlaHospitalar "1" o-- "1..*" Leito : "contem"
+    
+    %% Um Leito "aloca" um Paciente (ou nenhum)
     Leito "1" o-- "0..1" Paciente : "aloca"
