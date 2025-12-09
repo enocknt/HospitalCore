@@ -9,7 +9,7 @@ class Leito {
 private:
     int idLeito;
     bool ocupado;
-    Paciente *pacienteAlocado; // Ponteiro bruto, pois o Leito não "possui" o Paciente
+    Paciente *pacienteAlocado;
 
 public:
     Leito(int id);

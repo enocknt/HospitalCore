@@ -1,4 +1,4 @@
-#include "AlaHospitalar.h"
+#include <AlaHospitalar.h>
 
 AlaHospitalar::AlaHospitalar(const std::string &nome)
     : nomeAla(nome)

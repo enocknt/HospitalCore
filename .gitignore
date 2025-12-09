@@ -1,4 +1,5 @@
 build*/
+bin/
 *~
 *.swp
 *.o
@@ -18,3 +19,5 @@ html/
 doxygen_*
 testsconfig.ini
 cget
+CMakeLists.txt.user
+hospital_core

@@ -1,4 +1,4 @@
-#include "SistemaGestao.h"
+#include <SistemaGestao.h>
 
 // --- CRUD Paciente ---
 void SistemaGestao::adicionarPaciente(const std::string &nome, const std::string &cpf, const std::string &historico)
@@ -191,6 +191,9 @@ void SistemaGestao::internarPaciente(const std::string &cpfPaciente, const std::
     Leito *leito = ala->buscarLeitoDisponivel(); // Lança LeitoExcecao se lotado
 
     leito->ocupar(pac);
+
+    // Registra internacao no historico
+    internacoes.push_back(std::make_unique<Internacao>(pac, nomeAla, leito->getId(), DataHora()));
 }
 
 void SistemaGestao::darAltaPaciente(const std::string &cpfPaciente)
@@ -201,6 +204,15 @@ void SistemaGestao::darAltaPaciente(const std::string &cpfPaciente)
         for (const auto &leito : ala->getLeitos()) {
             if (leito->estaOcupado() && leito->getPaciente() == pac) {
                 leito->desocupar();
+
+                // Marca data de alta no historico (se existir registro aberto)
+                for (auto &intn : internacoes) {
+                    if (intn->getPaciente() == pac && intn->estaAinda()) {
+                        intn->setDataSaida(DataHora());
+                        break;
+                    }
+                }
+
                 return;
             }
         }
@@ -219,6 +231,20 @@ void SistemaGestao::listarInternados() const
                 std::cout << "Ala: " << ala->getNome() << " | " << *leito << std::endl;
             }
         }
+    }
+}
+
+void SistemaGestao::listarInternacoes() const
+{
+    std::cout << "--- Historico de Internacoes ---" << std::endl;
+
+    if (internacoes.empty()) {
+        std::cout << "Nenhuma internacao registrada." << std::endl;
+        return;
+    }
+
+    for (const auto &i : internacoes) {
+        std::cout << *i << std::endl;
     }
 }
 

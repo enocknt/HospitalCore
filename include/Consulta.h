@@ -1,19 +1,25 @@
 #pragma once
 
 #include "DataHora.h"
+#include "IAgendavel.h"
 
 // Forward declarations
 class Paciente;
 class Medico;
 
-class Consulta {
+class Consulta : public IAgendavel {
 private:
     DataHora dataHora;
-    Paciente *paciente; // Não possui
-    Medico *medico; // Não possui
+    Paciente *paciente;
+    Medico *medico;
 
 public:
     Consulta(Paciente *p, Medico *m, const DataHora &data);
+
+    // Implementação da interface IAgendavel
+    DataHora obterDataHora() const override;
+    bool temConflito(const DataHora &outraData) const override;
+    std::string obterDescricaoAgendamento() const override;
 
     // Getters
     DataHora getDataHora() const;

@@ -3,6 +3,7 @@
 #include "AlaHospitalar.h"
 #include "Consulta.h"
 #include "HospitalExcecao.h"
+#include "Internacao.h"
 #include "Medico.h"
 #include "Paciente.h"
 #include "Pessoa.h"
@@ -16,6 +17,7 @@ private:
     std::vector<std::unique_ptr<Pessoa> > pessoas;
     std::vector<std::unique_ptr<AlaHospitalar> > alas;
     std::vector<std::unique_ptr<Consulta> > consultas;
+    std::vector<std::unique_ptr<Internacao> > internacoes;
 
 public:
     SistemaGestao() = default;
@@ -49,7 +51,14 @@ public:
     void internarPaciente(const std::string &cpfPaciente, const std::string &nomeAla);
     void darAltaPaciente(const std::string &cpfPaciente);
     void listarInternados() const;
+    void listarInternacoes() const;
 
     // --- Polimorfismo ---
     void listarTodasPessoas() const;
+
+    // Acesso de leitura para persistência
+    const std::vector<std::unique_ptr<Pessoa> > &getPessoas() const { return pessoas; }
+    const std::vector<std::unique_ptr<AlaHospitalar> > &getAlas() const { return alas; }
+    const std::vector<std::unique_ptr<Consulta> > &getConsultas() const { return consultas; }
+    const std::vector<std::unique_ptr<Internacao> > &getInternacoes() const { return internacoes; }
 };

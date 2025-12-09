@@ -1,5 +1,5 @@
-#include "Leito.h"
-#include "Paciente.h"
+#include <Leito.h>
+#include <Paciente.h>
 
 Leito::Leito(int id)
     : idLeito(id)

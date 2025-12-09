@@ -1,12 +1,25 @@
-#include "Menu.h"
+#include <GerenciadorArquivos.h>
+#include <Menu.h>
 
 Menu::Menu()
     : executando(true)
 {
+    // Carrega preferências salvas anteriormente
+    GerenciadorArquivos::carregarTudo(sistema, preferences);
 }
 
 void Menu::executar()
 {
+    // Exibe saudação personalizada
+    std::cout << std::endl;
+    std::cout << "==================================================" << std::endl;
+    std::cout << "  Bem-vindo ao HospitalCore!" << std::endl;
+    std::cout << "  Usuario: " << preferences.getNomeExibicao() << std::endl;
+    std::cout << "  Tema: " << (preferences.ehTemaDarkModeAtivo() ? "Escuro" : "Claro") << std::endl;
+    std::cout << "==================================================" << std::endl;
+
+    pausar();
+
     while (executando) {
         exibirMenuPrincipal();
 
@@ -16,13 +29,16 @@ void Menu::executar()
         try {
             processarEscolha(escolha);
         } catch (const HospitalExcecao &e) {
-            std::cerr << "\n!!! Erro: " << e.what() << " !!!" << std::endl;
+            std::cerr << "\n! Erro: " << e.what() << " ." << std::endl;
             pausar();
         } catch (const std::exception &e) {
-            std::cerr << "\n!!! Erro Inesperado: " << e.what() << " !!!" << std::endl;
+            std::cerr << "\n! Erro Inesperado: " << e.what() << " ." << std::endl;
             pausar();
         }
     }
+
+    // Salva dados ao encerrar
+    salvarDados();
 }
 
 void Menu::exibirMenuPrincipal()
@@ -31,12 +47,16 @@ void Menu::exibirMenuPrincipal()
               << "--- Sistema de Gestao Hospitalar 'HospitalCore' ---" << std::endl
               << std::endl;
 
+    std::cout << "Usuario: " << preferences.getNomeExibicao() << std::endl
+              << std::endl;
+
     std::cout << "1. Gerenciar Pacientes" << std::endl;
     std::cout << "2. Gerenciar Medicos" << std::endl;
     std::cout << "3. Gerenciar Alas e Leitos" << std::endl;
     std::cout << "4. Gerenciar Consultas" << std::endl;
     std::cout << "5. Gerenciar Internacoes" << std::endl;
     std::cout << "6. Listar Ficha de Todas as Pessoas" << std::endl;
+    std::cout << "7. Gerenciar Preferencias" << std::endl;
     std::cout << "0. Sair" << std::endl
               << std::endl;
 
@@ -63,6 +83,9 @@ void Menu::processarEscolha(int escolha)
             break;
         case 6:
             demonstrarPolimorfismo();
+            break;
+        case 7:
+            gerenciarPreferences();
             break;
         case 0:
             executando = false;
@@ -91,9 +114,9 @@ void Menu::gerenciarPacientes()
     int escolha = lerOpcao();
 
     if (escolha == 1) {
-        std::string n = lerString("Nome: ");
-        std::string c = lerString("CPF: ");
-        std::string h = lerString("Historico: ");
+        std::string n = lerNome("Nome: ");
+        std::string c = lerCPF("CPF: ");
+        std::string h = lerHistorico("Historico: ");
 
         sistema.adicionarPaciente(n, c, h);
 
@@ -101,23 +124,23 @@ void Menu::gerenciarPacientes()
     } else if (escolha == 2) {
         sistema.listarPacientes();
     } else if (escolha == 3) {
-        std::string c = lerString("CPF: ");
+        std::string c = lerCPF("CPF: ");
 
         Paciente *p = sistema.buscarPacientePorCpf(c);
 
         p->exibirFicha();
     } else if (escolha == 4) {
-        std::string c = lerString("CPF: ");
+        std::string c = lerCPF("CPF: ");
 
         Paciente *p = sistema.buscarPacientePorCpf(c);
 
-        std::string h = lerString("Novo Historico: ");
+        std::string h = lerHistorico("Novo Historico: ");
 
         p->setHistorico(h);
 
         std::cout << "Historico atualizado." << std::endl;
     } else if (escolha == 5) {
-        std::string c = lerString("CPF: ");
+        std::string c = lerCPF("CPF: ");
 
         if (sistema.removerPessoa(c))
             std::cout << "Paciente removido." << std::endl;
@@ -143,10 +166,10 @@ void Menu::gerenciarMedicos()
     int escolha = lerOpcao();
 
     if (escolha == 1) {
-        std::string n = lerString("Nome: ");
-        std::string c = lerString("CPF: ");
-        std::string e = lerString("Especialidade: ");
-        std::string crm = lerString("CRM: ");
+        std::string n = lerNome("Nome: ");
+        std::string c = lerCPF("CPF: ");
+        std::string e = lerEspecialidade("Especialidade: ");
+        std::string crm = lerCRM("CRM: ");
 
         sistema.adicionarMedico(n, c, e, crm);
 
@@ -154,7 +177,7 @@ void Menu::gerenciarMedicos()
     } else if (escolha == 2) {
         sistema.listarMedicos();
     } else if (escolha == 3) {
-        std::string crm = lerString("CRM: ");
+        std::string crm = lerCRM("CRM: ");
 
         Medico *m = sistema.buscarMedicoPorCrm(crm);
 
@@ -175,12 +198,13 @@ void Menu::gerenciarAlasLeitos()
     std::cout << "3. Adicionar Leito a uma Ala" << std::endl;
     std::cout << "4. Listar Leitos de uma Ala" << std::endl;
     std::cout << "0. Voltar" << std::endl
+              << std::endl
               << std::endl;
 
     int escolha = lerOpcao();
 
     if (escolha == 1) {
-        std::string n = lerString("Nome da Ala (ex: Cardiologia): ");
+        std::string n = lerNomeAla("Nome da Ala (ex: Cardiologia): ");
 
         sistema.adicionarAla(n);
 
@@ -188,15 +212,15 @@ void Menu::gerenciarAlasLeitos()
     } else if (escolha == 2) {
         sistema.listarAlas();
     } else if (escolha == 3) {
-        std::string n = lerString("Nome da Ala: ");
+        std::string n = lerNomeAla("Nome da Ala: ");
 
-        int id = lerInt("ID do novo Leito (ex: 101): ");
+        int id = lerIdLeito("ID do novo Leito (ex: 101): ");
 
         sistema.adicionarLeitoNaAla(n, id);
 
         std::cout << "Leito adicionado!" << std::endl;
     } else if (escolha == 4) {
-        std::string n = lerString("Nome da Ala: ");
+        std::string n = lerNomeAla("Nome da Ala: ");
 
         sistema.listarLeitosDaAla(n);
     }
@@ -219,8 +243,8 @@ void Menu::gerenciarConsultas()
     int escolha = lerOpcao();
 
     if (escolha == 1) {
-        std::string c = lerString("CPF do Paciente: ");
-        std::string crm = lerString("CRM do Medico: ");
+        std::string c = lerCPF("CPF do Paciente: ");
+        std::string crm = lerCRM("CRM do Medico: ");
 
         DataHora d = lerDataHora();
 
@@ -230,7 +254,7 @@ void Menu::gerenciarConsultas()
     } else if (escolha == 2) {
         sistema.listarConsultas();
     } else if (escolha == 3) {
-        std::string c = lerString("CPF do Paciente: ");
+        std::string c = lerCPF("CPF do Paciente: ");
 
         DataHora d = lerDataHora();
 
@@ -258,12 +282,12 @@ void Menu::gerenciarInternacoes()
     int escolha = lerOpcao();
 
     if (escolha == 1) {
-        std::string c = lerString("CPF do Paciente: ");
-        std::string a = lerString("Nome da Ala: ");
+        std::string c = lerCPF("CPF do Paciente: ");
+        std::string a = lerNomeAla("Nome da Ala: ");
         sistema.internarPaciente(c, a);
         std::cout << "Paciente internado com sucesso!" << std::endl;
     } else if (escolha == 2) {
-        std::string c = lerString("CPF do Paciente: ");
+        std::string c = lerCPF("CPF do Paciente: ");
         sistema.darAltaPaciente(c);
         std::cout << "Paciente recebeu alta." << std::endl;
     } else if (escolha == 3) {
@@ -281,15 +305,74 @@ void Menu::demonstrarPolimorfismo()
     pausar();
 }
 
+void Menu::gerenciarPreferences()
+{
+    std::cout << std::endl
+              << "--- Preferencias do Usuario ---" << std::endl
+              << std::endl;
+    std::cout << "Nome Atual: " << preferences.getNomeExibicao() << std::endl;
+    std::cout << "Tema Atual: " << (preferences.ehTemaDarkModeAtivo() ? "Escuro" : "Claro") << std::endl
+              << std::endl;
+
+    std::cout << "1. Alterar Nome" << std::endl;
+    std::cout << "2. Alterar Tema" << std::endl;
+    std::cout << "3. Salvar Preferencias" << std::endl;
+    std::cout << "0. Voltar" << std::endl
+              << std::endl;
+
+    int escolha = lerOpcao();
+
+    if (escolha == 1) {
+        std::cout << "Nome atual: " << preferences.getNomeExibicao() << std::endl;
+        std::string novoNome = lerString("Novo nome: ");
+
+        if (novoNome.empty()) {
+            std::cout << "Erro: Nome nao pode ser vazio." << std::endl;
+        } else if (!ValidadorDados::validarNome(novoNome)) {
+            std::cout << "Erro: Nome invalido. Deve ter minimo 3 caracteres e conter apenas letras e espacos."
+                      << std::endl;
+        } else {
+            preferences.setNomeExibicao(novoNome);
+            std::cout << "Nome alterado com sucesso!" << std::endl;
+        }
+    } else if (escolha == 2) {
+        std::cout << "1. Claro" << std::endl;
+        std::cout << "2. Escuro" << std::endl;
+        int temaCod = lerOpcao();
+
+        if (temaCod == 1) {
+            preferences.setTema("claro");
+            std::cout << "Tema alterado para CLARO." << std::endl;
+        } else if (temaCod == 2) {
+            preferences.setTema("escuro");
+            std::cout << "Tema alterado para ESCURO." << std::endl;
+        } else {
+            std::cout << "Opcao invalida. Tente novamente." << std::endl;
+        }
+    } else if (escolha == 3) {
+        GerenciadorArquivos::salvarPreferences(preferences);
+        std::cout << "Preferencias salvas!" << std::endl;
+    }
+
+    if (escolha != 0)
+        pausar();
+}
+
+void Menu::salvarDados()
+{
+    GerenciadorArquivos::salvarTudo(sistema, preferences);
+    std::cout << "\nDados salvos ao encerrar a aplicacao." << std::endl;
+}
+
 // --- Funções Utilitárias ---
 int Menu::lerOpcao()
 {
     int escolha;
 
     while (!(std::cin >> escolha)) {
-        std::cout << "Entrada invalida. Digite um numero: ";
-
+        std::cin.clear();
         limparBuffer();
+        std::cout << "Entrada invalida. Digite um numero: ";
     }
 
     limparBuffer(); // Limpa o '\n'
@@ -312,27 +395,217 @@ int Menu::lerInt(const std::string &prompt)
 {
     int input;
 
-    std::cout << prompt;
-
-    while (!(std::cin >> input)) {
-        std::cout << "Entrada invalida. Digite um numero: ";
-
+    while (true) {
+        std::cout << prompt;
+        if (std::cin >> input) {
+            limparBuffer(); // Limpa o '\n'
+            return input;
+        }
+        std::cin.clear();
         limparBuffer();
+        std::cout << "Entrada invalida. Digite um numero: ";
     }
-
-    limparBuffer(); // Limpa o '\n'
-
-    return input;
 }
 
 DataHora Menu::lerDataHora()
 {
-    int d = lerInt("Dia (DD): ");
-    int m = lerInt("Mes (MM): ");
-    int a = lerInt("Ano (AAAA): ");
-    int h = lerInt("Hora (HH): ");
+    int d, m, a, h, min;
+    bool valido = false;
 
-    return DataHora(d, m, a, h, 0);
+    while (!valido) {
+        try {
+            d = lerInt("Dia (DD): ");
+            m = lerInt("Mes (MM): ");
+            a = lerInt("Ano (AAAA): ");
+            h = lerInt("Hora (HH): ");
+            min = lerInt("Minuto (MM): ");
+
+            if (!ValidadorDados::validarData(d, m, a)) {
+                throw DataInvalidaExcecao(d, m, a);
+            }
+
+            if (!ValidadorDados::validarHora(h)) {
+                throw HoraInvalidaExcecao(h);
+            }
+
+            if (!ValidadorDados::validarMinuto(min)) {
+                throw MinutoInvalidoExcecao(min);
+            }
+
+            valido = true;
+        } catch (const ValidacaoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+            std::cout << "Tente novamente." << std::endl;
+        }
+    }
+
+    return DataHora(d, m, a, h, min);
+}
+
+std::string Menu::lerCPF(const std::string &prompt)
+{
+    std::string cpf;
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            cpf = lerString(prompt);
+
+            if (!ValidadorDados::validarCPF(cpf)) {
+                throw CPFInvalidoExcecao(cpf);
+            }
+
+            valido = true;
+        } catch (const CPFInvalidoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return ValidadorDados::limparCPF(cpf);
+}
+
+std::string Menu::lerNome(const std::string &prompt)
+{
+    std::string nome;
+
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            nome = lerString(prompt);
+
+            if (!ValidadorDados::validarNome(nome)) {
+                throw NomeInvalidoExcecao(nome);
+            }
+
+            valido = true;
+        } catch (const NomeInvalidoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return nome;
+}
+
+std::string Menu::lerCRM(const std::string &prompt)
+{
+    std::string crm;
+
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            crm = lerString(prompt);
+
+            if (!ValidadorDados::validarCRM(crm)) {
+                throw CRMInvalidoExcecao(crm);
+            }
+
+            valido = true;
+        } catch (const CRMInvalidoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return crm;
+}
+
+std::string Menu::lerEspecialidade(const std::string &prompt)
+{
+    std::string especialidade;
+
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            especialidade = lerString(prompt);
+
+            if (!ValidadorDados::validarEspecialidade(especialidade)) {
+                throw ValidacaoExcecao("Especialidade invalida. Deve conter min. 3 caracteres.");
+            }
+
+            valido = true;
+        } catch (const ValidacaoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return especialidade;
+}
+
+std::string Menu::lerHistorico(const std::string &prompt)
+{
+    std::string historico;
+
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            historico = lerString(prompt);
+
+            if (!ValidadorDados::validarHistorico(historico)) {
+                throw ValidacaoExcecao("Historico invalido. Nao pode estar vazio ou exceder 500 caracteres.");
+            }
+
+            valido = true;
+        } catch (const ValidacaoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return historico;
+}
+
+std::string Menu::lerNomeAla(const std::string &prompt)
+{
+    std::string nomeAla;
+
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            nomeAla = lerString(prompt);
+
+            if (!ValidadorDados::validarNomeAla(nomeAla)) {
+                throw ValidacaoExcecao("Nome da ala invalido. Maximo 50 caracteres, sem caracteres especiais.");
+            }
+
+            valido = true;
+        } catch (const ValidacaoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return nomeAla;
+}
+
+int Menu::lerIdLeito(const std::string &prompt)
+{
+    int id;
+    bool valido = false;
+
+    while (!valido) {
+        try {
+            std::cout << prompt;
+            if (!(std::cin >> id)) {
+                std::cin.clear();
+                limparBuffer();
+                throw ValidacaoExcecao("Entrada invalida. Digite um numero inteiro entre 1 e 9999.");
+            }
+
+            limparBuffer();
+
+            if (!ValidadorDados::validarIdLeito(id)) {
+                throw ValidacaoExcecao("ID do leito invalido. Deve estar entre 1 e 9999.");
+            }
+
+            valido = true;
+        } catch (const ValidacaoExcecao &e) {
+            std::cerr << "\n! " << e.what() << " ." << std::endl;
+        }
+    }
+
+    return id;
 }
 
 void Menu::limparBuffer()
